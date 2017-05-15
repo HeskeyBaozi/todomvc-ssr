@@ -10,6 +10,14 @@ export interface ITodoItem {
     date: Moment;
 }
 
+export interface IRawTodoItem {
+    tid: string;
+    title: string;
+    description: string;
+    isCompleted: boolean;
+    date: string;
+}
+
 export enum FilterState {
     all, active, completed
 }

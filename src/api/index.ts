@@ -1,32 +1,43 @@
-import {ITodoItem} from "../interface/index";
-import moment = require("moment");
+import request from "../utils/request";
+import {IRawTodoItem, ITodoItem} from "../interface/index";
+import * as qs from "qs";
 
-export const fetchTodos = async function(): Promise<ITodoItem[]> {
-    return new Promise<ITodoItem[]>((resolve, reject) => {
-        setTimeout(() => {
-            resolve([
-                {
-                    isCompleted: false,
-                    title: 'Hello001',
-                    description: 'Description001',
-                    date: moment("1997-10-14 18:18", "YYYY-MM-DD HH:mm"),
-                    tid: '001'
-                },
-                {
-                    isCompleted: false,
-                    title: 'Hello002',
-                    description: 'Description002',
-                    date: moment(),
-                    tid: '002'
-                },
-                {
-                    isCompleted: true,
-                    title: 'Hello003',
-                    description: 'Description003',
-                    date: moment(),
-                    tid: '003'
-                },
-            ]);
-        }, 500);
+function parseToRawItem(todo: ITodoItem): IRawTodoItem {
+    return Object.assign({}, todo, {
+        date: todo.date.format("YYYY-MM-DD HH:mm")
     });
-};
+}
+
+
+export function fetchTodos() {
+    return request('/todos', {
+        method: 'GET'
+    });
+}
+
+export function updateTodo(updatedTodoItem: ITodoItem) {
+    return request('/todos?type=update', {
+        method: 'POST',
+        headers: new Headers({
+            "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+        }),
+        body: qs.stringify(parseToRawItem(updatedTodoItem))
+    })
+}
+
+
+export function addTodo(newTodoItem: ITodoItem) {
+    return request('/todos?type=add', {
+        method: 'POST',
+        headers: new Headers({
+            "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+        }),
+        body: qs.stringify(parseToRawItem(newTodoItem))
+    });
+}
+
+export function deleteTodo(deleteTid: string) {
+    return request(`/todos?${qs.stringify({tid: deleteTid})}`, {
+        method: 'DELETE'
+    });
+}

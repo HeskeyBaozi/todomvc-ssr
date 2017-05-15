@@ -17,17 +17,20 @@
                 <template v-else>
                     <mu-list v-show="todos.length">
                         <mu-sub-header>
-                            <mu-checkbox :value="allDone" @change="toggleAll"></mu-checkbox>
+                            <mu-checkbox :value="allDone" @change="setAllCompletedAsync"></mu-checkbox>
                         </mu-sub-header>
                         <transition-group name="list" tag="div" mode="out-in">
                             <mu-list-item v-for="todo in filteredTodos"
                                           :title="todo.title"
                                           :key="todo.tid"
                                           :class="{'item-selected':todo.tid === currentTodo.tid && isEditing, deleted: todo.isCompleted}"
-                                          @click.stop="itemClick(todo)">
-                                <mu-checkbox v-model="todo.isCompleted" slot="left"></mu-checkbox>
+                                          @click.stop="setCurrentTodoAsync(todo)">
+                                <mu-checkbox v-model="todo.isCompleted"
+                                             slot="left"
+                                             @change="updateTodosAsync(todo)"
+                                ></mu-checkbox>
                                 <mu-icon-button icon="delete" slot="right"
-                                                @click.stop="removeTodo(todo, $event)"></mu-icon-button>
+                                                @click.stop="removeTodosAsync(todo)"></mu-icon-button>
                             </mu-list-item>
                         </transition-group>
                     </mu-list>
@@ -39,7 +42,7 @@
                                   label="Completed"></mu-radio>
                     </p>
                     <mu-raised-button v-show="todos.length"
-                                      @click.stop="removeCompleted()"
+                                      @click.stop="removeCompleted"
                                       fullWidth>Clear Completed
                     </mu-raised-button>
                 </template>
@@ -91,11 +94,11 @@
                 </div>
                 <mu-raised-button :label="isEditing ? 'update': 'add new'"
                                   class="submit-button"
-                                  @click="isEditing ? updateTodo() : addNewTodosAsync()"
+                                  @click="isEditing ? updateTodosAsync(currentTodo) : addNewTodosAsync()"
                                   fullWidth
                                   primary></mu-raised-button>
                 <mu-raised-button v-show="currentTodo.title"
-                                  @click.stop="clearDetail()"
+                                  @click.stop="clearCurrentItem"
                                   label="Clear"
                                   class="clear-button"
                                   fullWidth></mu-raised-button>
@@ -109,7 +112,7 @@
     import Component from 'vue-class-component';
     import moment = require('moment');
     import {ITodoItem, FilterState} from '../interface';
-    import {Action, State, Getter} from 'vuex-class';
+    import {Action, State, Getter, Mutation} from 'vuex-class';
 
 
     // helper
@@ -136,8 +139,6 @@
         // Local State
         visibility: FilterState = FilterState.all;
 
-        editingTid: string = null;
-
         // Computed
         get filterState(): string {
             return FilterState[this.visibility];
@@ -152,7 +153,7 @@
         };
 
         get isEditing(): boolean {
-            return this.editingTid !== null;
+            return this.currentTodo.tid !== null;
         }
 
         get filteredTodos(): Array<ITodoItem> {
@@ -182,7 +183,7 @@
         }
 
         // lifecycle
-        mounted() {
+        beforeMount() {
             this.initializeTodoAsync();
         }
 
@@ -193,58 +194,27 @@
         @Action('addNewTodosAsync')
         addNewTodosAsync;
 
-        toggleAll(checked: boolean): void {
-            this.todos.forEach(todo => {
-                todo.isCompleted = checked;
-            });
-        }
+        @Action('setAllCompletedAsync')
+        setAllCompletedAsync;
 
-        removeTodo(currentTodo: ITodoItem, e: Event): void {
-            if (currentTodo.tid === this.currentTodo.tid) {
-                this.editingTid = null;
-            }
-            const index: number = this.todos.findIndex(todo => todo.tid === currentTodo.tid);
-            this.todos.splice(index, 1);
-        }
+        @Action('removeTodosAsync')
+        removeTodosAsync;
 
-        updateTodo(): void {
-            if (!this.currentTodo.title.trim()) {
-                return;
-            }
-            this.todos.forEach(todo => {
-                if (todo.tid === this.currentTodo.tid) {
-                    Object.assign(todo, this.currentTodo);
-                }
-            })
-        }
+        @Action('updateTodosAsync')
+        updateTodosAsync;
 
-        clearDetail(): void {
-            Object.assign(this.currentTodo, {
-                isCompleted: false,
-                title: '',
-                description: '',
-                date: moment(),
-                tid: null
-            });
-        }
+        @Action('setCurrentTodoAsync')
+        setCurrentTodoAsync;
 
-        itemClick(todo: ITodoItem): void {
-            if (this.isEditing) {
-                this.editingTid = null;
-                this.clearDetail();
-            } else {
-                this.editingTid = todo.tid;
-                Object.assign(this.currentTodo, {}, todo);
-            }
-        }
+        @Action('removeCompletedTodoAsync')
+        removeCompletedTodoAsync;
 
         removeCompleted(): void {
-            this.todos = filters[FilterState.active](this.todos);
-            if (!this.remaining) {
-                this.editingTid = null;
-                this.clearDetail();
-            }
+            this.removeCompletedTodoAsync(filters[FilterState.active]);
         }
+
+        @Mutation('clearCurrentItem')
+        clearCurrentItem;
     }
 </script>
 
