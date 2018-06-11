@@ -54,28 +54,28 @@ const actions: ActionTree<ITodosState, IRootState> = {
         if (!newItem.title.trim())
             return;
         newItem.tid = newItem.title + moment().milliseconds();
-        await addTodo(newItem);
+        // await addTodo(newItem);
         commit('pushBackTodos', newItem);
         commit('clearCurrentItem');
     },
     async setAllCompletedAsync({commit, state}, completedValue: boolean): Promise<void> {
         commit('saveTodoCompletedValue', completedValue);
         for (let todo of state.todos) {
-            await updateTodo(todo);
+            // await updateTodo(todo);
         }
     },
     async updateTodosAsync({commit, state}, updatedTodoItem: ITodoItem): Promise<void> {
         if (!updatedTodoItem.title.trim()) {
             return;
         }
-        await updateTodo(updatedTodoItem);
+        // await updateTodo(updatedTodoItem);
         commit('updateOldTodoItem', updatedTodoItem);
     },
     async removeTodosAsync({commit, state}, removedTodo: ITodoItem): Promise<void> {
         if (state.currentTodo.tid === removedTodo.tid) {
             commit('clearCurrentItem');
         }
-        await deleteTodo(removedTodo.tid);
+        // await deleteTodo(removedTodo.tid);
         commit('spliceTodos', removedTodo.tid);
     },
     async setCurrentTodoAsync({commit, state}, selectedTodo: ITodoItem): Promise<void> {
@@ -89,7 +89,7 @@ const actions: ActionTree<ITodosState, IRootState> = {
     async removeCompletedTodoAsync({commit, state}, filter: (todos: ITodoItem[]) => ITodoItem[]): Promise<void> {
         for (let todo of state.todos) {
             if (todo.isCompleted) {
-                await deleteTodo(todo.tid);
+                // await deleteTodo(todo.tid);
             }
         }
         const filteredTodos: ITodoItem[] = filter(state.todos);
